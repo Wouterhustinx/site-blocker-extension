@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Site Blocker</title>
+    <link rel="stylesheet" href="popup.css" />
+  </head>
+  <body>
+    <header>
+      <h1>Site Blocker</h1>
+      <p class="subtitle">Stay focused.</p>
+    </header>
+
+    <form id="add-form" autocomplete="off">
+      <input
+        type="text"
+        id="domain-input"
+        placeholder="e.g. reddit.com"
+        spellcheck="false"
+        required
+      />
+      <button type="submit">Add</button>
+    </form>
+
+    <p id="error" class="error" hidden></p>
+
+    <section>
+      <h2>Blocked sites</h2>
+      <ul id="blocked-list"></ul>
+      <p id="empty-state" class="empty" hidden>No sites blocked yet.</p>
+    </section>
+
+    <script src="popup.js"></script>
+  </body>
+</html>

@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Site Blocked</title>
+    <link rel="stylesheet" href="blocked.css" />
+  </head>
+  <body>
+    <main>
+      <div class="icon">⛔</div>
+      <h1>Site blocked</h1>
+      <p class="domain" id="domain">this site</p>
+      <p class="message">Stay focused. You've got this.</p>
+      <button id="back-btn">Go back</button>
+    </main>
+
+    <script>
+      const params = new URLSearchParams(window.location.search);
+      const domain = params.get('domain');
+      if (domain) {
+        document.getElementById('domain').textContent = domain;
+      }
+
+      document.getElementById('back-btn').addEventListener('click', () => {
+        if (window.history.length > 1) {
+          window.history.back();
+        } else {
+          window.close();
+        }
+      });
+    </script>
+  </body>
+</html>
