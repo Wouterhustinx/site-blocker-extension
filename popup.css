@@ -94,6 +94,24 @@ li {
   font-size: 14px;
 }
 
+.info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.count {
+  font-size: 11px;
+  color: #888;
+}
+
 .remove-btn {
   background: transparent;
   color: #999;

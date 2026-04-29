@@ -1,4 +1,20 @@
 const STORAGE_KEY = 'blockedDomains';
+const COUNTS_KEY = 'blockCounts';
+
+function todayKey() {
+  const d = new Date();
+  const yyyy = d.getFullYear();
+  const mm = String(d.getMonth() + 1).padStart(2, '0');
+  const dd = String(d.getDate()).padStart(2, '0');
+  return `${yyyy}-${mm}-${dd}`;
+}
+
+async function getTodayCounts() {
+  const result = await chrome.storage.local.get(COUNTS_KEY);
+  const data = result[COUNTS_KEY];
+  if (!data || data.date !== todayKey()) return {};
+  return data.counts || {};
+}
 
 const form = document.getElementById('add-form');
 const input = document.getElementById('domain-input');
@@ -37,7 +53,7 @@ async function setDomains(domains) {
   await chrome.storage.sync.set({ [STORAGE_KEY]: domains });
 }
 
-function render(domains) {
+function render(domains, counts) {
   list.innerHTML = '';
   if (domains.length === 0) {
     emptyState.hidden = false;
@@ -48,9 +64,22 @@ function render(domains) {
   for (const domain of domains) {
     const li = document.createElement('li');
 
-    const span = document.createElement('span');
-    span.textContent = domain;
-    li.appendChild(span);
+    const info = document.createElement('div');
+    info.className = 'info';
+
+    const name = document.createElement('span');
+    name.className = 'name';
+    name.textContent = domain;
+    info.appendChild(name);
+
+    const count = counts[domain] || 0;
+    const countEl = document.createElement('span');
+    countEl.className = 'count';
+    countEl.textContent =
+      count === 0 ? '0 today' : `${count} ${count === 1 ? 'try' : 'tries'} today`;
+    info.appendChild(countEl);
+
+    li.appendChild(info);
 
     const btn = document.createElement('button');
     btn.className = 'remove-btn';
@@ -64,8 +93,8 @@ function render(domains) {
 }
 
 async function refresh() {
-  const domains = await getDomains();
-  render(domains);
+  const [domains, counts] = await Promise.all([getDomains(), getTodayCounts()]);
+  render(domains, counts);
 }
 
 async function addDomain(rawValue) {
@@ -90,7 +119,7 @@ async function addDomain(rawValue) {
   domains.push(domain);
   domains.sort();
   await setDomains(domains);
-  render(domains);
+  await refresh();
   input.value = '';
 }
 
@@ -98,7 +127,7 @@ async function removeDomain(domain) {
   const domains = await getDomains();
   const next = domains.filter((d) => d !== domain);
   await setDomains(next);
-  render(next);
+  await refresh();
 }
 
 form.addEventListener('submit', (event) => {

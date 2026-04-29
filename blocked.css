@@ -47,7 +47,18 @@ h1 {
   opacity: 0.9;
   max-width: 400px;
   line-height: 1.5;
+  margin: 0 0 16px;
+}
+
+.count-text {
+  font-size: 14px;
+  opacity: 0.75;
   margin: 0 0 32px;
+}
+
+.count-text #count {
+  font-weight: 600;
+  opacity: 1;
 }
 
 button {
