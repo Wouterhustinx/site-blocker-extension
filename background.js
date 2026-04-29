@@ -1,5 +1,16 @@
-const STORAGE_KEY = 'blockedDomains';
+const DOMAINS_KEY = 'blockedDomains';
+const PENDING_KEY = 'pendingRemovals';
 const RULE_ID_OFFSET = 1;
+const ALARM_NAME = 'processExpiredRemovals';
+
+function todayInAmsterdam() {
+  return new Intl.DateTimeFormat('en-CA', {
+    timeZone: 'Europe/Amsterdam',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit'
+  }).format(new Date());
+}
 
 function buildRule(domain, id) {
   const blockedPageUrl = chrome.runtime.getURL(
@@ -34,25 +45,69 @@ async function syncRules(domains) {
   });
 }
 
+async function processExpiredRemovals() {
+  const result = await chrome.storage.sync.get([DOMAINS_KEY, PENDING_KEY]);
+  const domains = Array.isArray(result[DOMAINS_KEY]) ? result[DOMAINS_KEY] : [];
+  const pending =
+    result[PENDING_KEY] && typeof result[PENDING_KEY] === 'object'
+      ? result[PENDING_KEY]
+      : {};
+
+  const today = todayInAmsterdam();
+  const newPending = {};
+  let newDomains = [...domains];
+  let changed = false;
+
+  for (const [domain, date] of Object.entries(pending)) {
+    if (date <= today) {
+      const idx = newDomains.indexOf(domain);
+      if (idx >= 0) {
+        newDomains.splice(idx, 1);
+      }
+      changed = true;
+    } else {
+      newPending[domain] = date;
+    }
+  }
+
+  if (changed) {
+    await chrome.storage.sync.set({
+      [DOMAINS_KEY]: newDomains,
+      [PENDING_KEY]: newPending
+    });
+  }
+
+  return newDomains;
+}
+
 async function loadAndSync() {
-  const result = await chrome.storage.sync.get(STORAGE_KEY);
-  const domains = Array.isArray(result[STORAGE_KEY]) ? result[STORAGE_KEY] : [];
+  const domains = await processExpiredRemovals();
   await syncRules(domains);
 }
 
+function setupAlarm() {
+  chrome.alarms.create(ALARM_NAME, { periodInMinutes: 30 });
+}
+
 chrome.runtime.onInstalled.addListener(() => {
+  setupAlarm();
   loadAndSync();
 });
 
 chrome.runtime.onStartup.addListener(() => {
+  setupAlarm();
   loadAndSync();
 });
 
+chrome.alarms.onAlarm.addListener((alarm) => {
+  if (alarm.name === ALARM_NAME) {
+    loadAndSync();
+  }
+});
+
 chrome.storage.onChanged.addListener((changes, area) => {
-  if (area === 'sync' && changes[STORAGE_KEY]) {
-    const domains = Array.isArray(changes[STORAGE_KEY].newValue)
-      ? changes[STORAGE_KEY].newValue
-      : [];
-    syncRules(domains);
+  if (area !== 'sync') return;
+  if (changes[DOMAINS_KEY] || changes[PENDING_KEY]) {
+    loadAndSync();
   }
 });

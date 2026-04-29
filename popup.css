@@ -125,6 +125,27 @@ li {
   color: #d93636;
 }
 
+li.pending {
+  background: #fff8e6;
+  border-color: #f0d68a;
+}
+
+li.pending .count {
+  color: #a17b1f;
+}
+
+li.pending .remove-btn {
+  font-size: 12px;
+  font-weight: 500;
+  color: #4a90e2;
+  padding: 4px 8px;
+}
+
+li.pending .remove-btn:hover {
+  color: #3a7bc8;
+  text-decoration: underline;
+}
+
 .empty {
   font-size: 13px;
   color: #999;
