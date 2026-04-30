@@ -16,6 +16,7 @@ function buildRule(domain, id) {
   const blockedPageUrl = chrome.runtime.getURL(
     `blocked.html?domain=${encodeURIComponent(domain)}`
   );
+  const escaped = domain.replace(/\./g, '\\.');
 
   return {
     id,
@@ -25,7 +26,7 @@ function buildRule(domain, id) {
       redirect: { url: blockedPageUrl }
     },
     condition: {
-      requestDomains: [domain],
+      regexFilter: `^https?://([^/?#]+\\.)?${escaped}([/?#]|$)`,
       resourceTypes: ['main_frame']
     }
   };
@@ -111,3 +112,5 @@ chrome.storage.onChanged.addListener((changes, area) => {
     loadAndSync();
   }
 });
+
+loadAndSync().catch((err) => console.error('[SiteBlocker] sync failed', err));
